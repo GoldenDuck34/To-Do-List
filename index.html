@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>To Do List</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      #container {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      #addItem {
+        width: 100%;
+        height: 5%;
+        font-size: 1.5em;
+        padding: 10px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: white; /* To make sure it doesn't show through */
+      }
+
+      #toDo {
+        flex-grow: 1;
+        overflow-y: auto;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+      }
+
+      #toDo li {
+        width: 100%;
+        height: 8vh;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: center;
+        list-style-type: none;
+        margin: 0;
+        font-weight: bold;
+        font-size: 2em;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+
+      #toDo li:nth-child(even) {
+        background-color: lightgray;
+      }
+
+      #toDo li:nth-child(odd) {
+        background-color: lightcyan;
+      }
+
+      #toDo li:hover {
+        background-color: gray;
+      }
+
+      .completed {
+        background-color: limegreen !important;
+        text-decoration: line-through;
+      }
+
+      button {
+        text-decoration-line: none !important; /* No strike-through on button, because js strikes through the list item when clicked */
+        font-size: 0.5em;
+        padding: 5px 10px;
+        margin-left: 10px;
+        cursor: pointer;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 5px;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+    <link rel="icon" type="image/x-icon" href="favicon.png" />
+  </head>
+  <body>
+    <div id="container">
+      <input id="addItem" type="text" placeholder="Add item..." autofocus />
+      <ul id="toDo"></ul>
+    </div>
+    <script type="text/javascript" defer>
+      const list = document.querySelector("#toDo");
+      const input = document.querySelector("#addItem");
+
+      // Load items from local storage, handling empty/null cases safely
+      const existingItems = JSON.parse(localStorage.getItem("items") || "[]");
+      existingItems.forEach(({ text, completed }) =>
+        addItem(text, false, completed)
+      );
+
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && input.value.trim() !== "") {
+          addItem(input.value.trim(), true);
+          input.value = "";
+        }
+      });
+
+      function addItem(text, saveToStorage, completed = false) {
+        if (text.trim().length <= 150) {
+          const listItem = document.createElement("li");
+          listItem.textContent = text;
+
+          if (completed) {
+            listItem.classList.add("completed");
+          }
+
+          listItem.addEventListener("click", () => toggleCompleted(listItem));
+          listItem.addEventListener("dblclick", () => deleteItem(listItem));
+
+          const renameButton = document.createElement("button");
+          renameButton.textContent = "Rename";
+          renameButton.addEventListener("click", () => renameItem(listItem));
+          listItem.appendChild(renameButton);
+
+          list.appendChild(listItem);
+
+          if (saveToStorage) {
+            saveItems();
+          }
+
+          window.scrollTo(0, document.body.scrollHeight);
+        }
+      }
+
+      function toggleCompleted(item) {
+        item.classList.toggle("completed");
+        saveItems();
+      }
+
+      function deleteItem(item) {
+        item.remove();
+        saveItems();
+      }
+
+      function renameItem(item) {
+        const newText = prompt("Enter new name:", item.firstChild.textContent);
+        if (newText && newText.trim() !== "" && newText.trim().length <= 150) {
+          item.firstChild.textContent = newText.trim();
+          saveItems();
+        }
+      }
+
+      function saveItems() {
+        const items = [...list.children].map((li) => ({
+          text: li.firstChild.textContent,
+          completed: li.classList.contains("completed"),
+        }));
+        localStorage.setItem("items", JSON.stringify(items));
+      }
+    </script>
+  </body>
+</html>
